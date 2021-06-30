@@ -1,0 +1,15 @@
+"AntiSeriesComplementaryParallel"
+* C:\Users\aitor\OneDrive\Msc Thesis\Chap2 Voltage clamp\Restart\cir\AntiSeriesComplementaryParallel.asc
+R3 N002 0 {Rs}
+R4 N002 N003 {Ree}
+C3 N002 N003 {Ce}
+G1 0 N003 out 0 {1/gain}
+I1 N002 0 I value=0 dc=0 dcvar=0 noise=0
+C1 out 0 {Cload}
+XU1 0 N001 N003 0 CMOS18ND W={Was} L={L} ID={IDas}
+XU2 out N001 0 0 CMOS18PN W_N={W_ppN} L_N={L_ppN} ID_N={ID_ppN} W_P={W_ppP} L_P={L_ppP} ID_P={ID_ppP}
+.lib SLiCAP.lib
+* loopgain reference: Gm_M1_XU1
+* controller with inverting transfer
+.backanno
+.end

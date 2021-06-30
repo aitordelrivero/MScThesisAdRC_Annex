@@ -1,0 +1,6 @@
+* C:\Users\aitor\OneDrive\Msc Thesis\Chap2 Voltage clamp\Passive\cir\NMOSnoiseKFAF.asc
+XU1 N001 0 out NM18_noise ID={ID} IG={IG} W={W} L={L}
+V1 N001 0 V value=0 dc=0 dcvar=0 noise=0
+.lib SLiCAP.lib
+.backanno
+.end

@@ -1,0 +1,18 @@
+"FreqComp_PoleSplit_InclR_NoBias"
+* C:\Users\aitor\OneDrive\Msc Thesis\Chap2 Voltage clamp\AlternativeTopology\cir\FreqComp_PoleSplit_InclR_NoBias.asc
+R3 N004 0 {Rs}
+R4 N004 N002 {Ree}
+C3 N004 N002 {Ce}
+I1 N004 0 I value=0 dc=0 dcvar=0 noise=0
+C1 out 0 {Cload}
+R1 N002 out {gain}
+XU1 0 N001 N002 0 CMOS18ND W={Was} L={Lin} ID={IDas}
+XU4 out N001 0 0 CMOS18P W={Wout} L={Lout} ID={IDoutPMOS}
+C2 N001 N003 {Cps}
+R2 N003 out {Rps}
+.lib SLiCAP.lib
+* +
+* -
+* -
+.backanno
+.end

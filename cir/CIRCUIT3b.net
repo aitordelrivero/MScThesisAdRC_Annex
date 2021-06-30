@@ -1,0 +1,20 @@
+* C:\Users\aitor\OneDrive\Msc Thesis\Chap2 Voltage clamp\AlternativeTopology\cir\CIRCUIT3b.asc
+R3 N003 0 {Rs}
+R4 N003 N001 {Ree}
+C3 N003 N001 {Ce}
+I1 N003 0 I value=0 dc=0 dcvar=0 noise=0
+C1 out 0 {Cload}
+R1 N001 out {gain}
+XU1 N002 out N001 0 CMOS18ND W={Was} L={Lin} ID={IDas}
+XU2 N002 N002 0 0 CMOS18P W={Wcm} L={Lcm} ID={IDasPMOS}
+XU3 out N002 0 0 CMOS18P W={Wcm} L={Lcm} ID={IDasPMOS}
+XU6 NC_01 0 0 0 CMOS18N W={Wbcm} L={Lbcm} ID={2*IDas}
+.lib SLiCAP.lib
+* loopgain reference: Gm_M1_XU1 (cascoded version, no Cdg)
+* -
+* -
+* +
+* +
+* -
+.backanno
+.end

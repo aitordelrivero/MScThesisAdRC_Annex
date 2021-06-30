@@ -1,0 +1,11 @@
+* C:\Users\aitor\OneDrive\Msc Thesis\Chap2 Voltage clamp\Passive\cir\NoiseController_onlypink.asc
+XU1 N002 0 N003 NM18_noise_onlypink ID={ID} IG={IG} W={W} L={L}
+H1 out 0 N003 0 {gain}
+R3 N001 0 {Rs}
+R4 N001 N002 {Ree}
+C3 N001 N002 {Ce}
+R1 N002 0 {gain}
+I1 N001 0 I value=0 dc=0 dcvar=0 noise=0
+.lib SLiCAP.lib
+.backanno
+.end
