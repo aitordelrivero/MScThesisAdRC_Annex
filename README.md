@@ -1,23 +1,25 @@
 # MScThesisAdRC_AnnexI
 
-The scripts are art of the Master's Thesis "Microelectronic design of a pseudo voltage clamp for a 0.18um CMOS-based mesoscale neural interface for intracellular recording and stimulation"
+The scripts are part of the Master's Thesis "Microelectronic design of a pseudo voltage clamp for a 0.18um CMOS-based mesoscale neural interface for intracellular recording and stimulation"
 
 by 
 
 Aitor del Rivero Cortázar
 
 Section Bioelectronics, Department of Microelectronics, EEMCS, Delft University of Technology, the Netherlands.
+
 &
+
 Bio Engineering Lab, D-BSSE, ETH Zürich, Switzerland.
 
-THIS RUNS ON SLiCAP (Symbolic Linear Circuit Analysis Program) FOR PYTHON, by Anton Montagne.
+The scripts run on SLiCAP (Symbolic Linear Circuit Analysis Program) for Python, by Anton Montagne.
 SLiCAP is licensed under a Creative Commons Attribution-NonCommercial-NoDerivatives 4.0 International License.
 Based on a work at: http://www.analog-electronics.eu/slicap/slicap.html
 
 ------
 
 
-PLEASE BEFORE RUNNING ANY OF THE SCRIPTS INSTALL THE REQUIRED SOFTWARE:
+PLEASE, BEFORE RUNNING ANY OF THE SCRIPTS INSTALL THE REQUIRED SOFTWARE:
 
 
 1. Install Python 3 (https://www.microsoft.com/en-us/p/python-37/9nj46sx7x90p)
