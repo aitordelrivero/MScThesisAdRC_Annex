@@ -17,7 +17,7 @@ Based on a work at: http://www.analog-electronics.eu/slicap/slicap.html
 ------
 
 
-PLEASE BEFORE EXECUTING THIS FILE FOLLOW THE NEXT INSTRUCTIONS:
+PLEASE BEFORE RUNNING ANY OF THE SCRIPTS INSTALL THE REQUIRED SOFTWARE:
 
 
 1. Install Python 3 (https://www.microsoft.com/en-us/p/python-37/9nj46sx7x90p)
