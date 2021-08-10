@@ -9,11 +9,12 @@ Aitor del Rivero Cortázar
 at
 
 Section Bioelectronics, Department of Microelectronics, EEMCS, Delft University of Technology, the Netherlands.
+
 Bio Engineering Lab, D-BSSE, ETH Zürich, Switzerland.
 
 The scripts run on SLiCAP (Symbolic Linear Circuit Analysis Program) for Python, by Anton Montagne.
 SLiCAP is licensed under a Creative Commons Attribution-NonCommercial-NoDerivatives 4.0 International License.
-Based on a work at: http://www.analog-electronics.eu/slicap/slicap.html
+More information available at: http://www.analog-electronics.eu/slicap/slicap.html
 
 ------
 
@@ -36,3 +37,17 @@ PLEASE, BEFORE RUNNING ANY OF THE SCRIPTS INSTALL THE REQUIRED SOFTWARE:
 5. Install SliCAP:
     git clone https://github.com/aitordelrivero/SLiCAP_python.git
     python setup.py install --user
+
+
+------
+
+PLEASE NOTE THAT
+
+1) he script might not run for different SLiCAP versions. The scripts have been tested with the version at https://github.com/aitordelrivero/SLiCAP_python/tree/e3f4d5fddc5466398a813fc3eebde7475d7c4795.
+
+2) The scripts can run with default EKV parameters. BEL's process parameters are available in the internal Wiki only for authorised users.
+
+------
+
+Last update: 15/08/2021
+Aitor del Rivero Cortázar. Creative Commons Attribution-NonCommercial-NoDerivatives 4.0 International License. 
