@@ -22,7 +22,7 @@ More information available at: http://www.analog-electronics.eu/slicap/slicap.ht
 PLEASE, BEFORE RUNNING ANY OF THE SCRIPTS INSTALL THE REQUIRED SOFTWARE:
 
 
-1. Install Python 3 (https://www.microsoft.com/en-us/p/python-37/9nj46sx7x90p)
+1. Install Python 3 (https://www.microsoft.com/en-us/p/python-37/9nj46sx7x90p or equivalent)
 2. Install the following packages for Pyhton 3 (python -m pip install ............):
     - docutils==0.16
     - numpy>=1.18.1
