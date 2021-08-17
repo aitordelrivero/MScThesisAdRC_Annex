@@ -45,7 +45,7 @@ PLEASE NOTE THAT
 
 1) The scripts might not run for different SLiCAP versions. The scripts have been tested with the version at https://github.com/aitordelrivero/SLiCAP_python/tree/e3f4d5fddc5466398a813fc3eebde7475d7c4795.
 
-2) The scripts can run with default EKV parameters. BEL's process parameters are available in the internal Wiki only for authorised users.
+2) The scripts can run with default EKV parameters. Process parameters are available in the internal Wiki only for authorised users.
 
 ------
 
