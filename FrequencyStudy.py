@@ -1,11 +1,5 @@
 #!/usr/bin/env python2
 # -*- coding: utf-8 -*-
-"""
-
-SCRIPT #4: Design of frequency response.
-
-"""
-
 
 from SLiCAP import *
 from sympy.plotting import plot3d
@@ -17,25 +11,10 @@ prj = initProject('MSc Thesis')
 print("Project inititated")
 ini.MaximaTimeOut = 600         #Some extra time to allow the computer to calculate integrals.
 
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-#List of all circuits that will be checked
-circuits=["FreqComp_Both"] #"FreqComp_PoleSplit_InclR"
-#One cps for gains of 200M or larger, and other for gains of 200M or lower. At the end I use only one value
-CpsDefaultBIG='5p'
-CpsDefaultSMALL='5p'
-RpsDefault=200000 #None for 1/gm4
-Rph1Default=4000
-PrintPreCompensationInformation=False
-BruteRootLocus=False
-SelectiveRootLocus=True
-#circuits=["FreqComp_PoleSplit_NoR_NoBias","FreqComp_PoleSplit_NoR","FreqComp_PoleSplit_InclR","FreqComp_PoleSplit_InclR_NoBias", "FreqComp_Phantom", "FreqComp_Phantom_NoBias","FreqComp_Both_NoBias"]
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-
 # Transistor sizing (Instance i1)
-Win=30e-6
-IDin=2e-6
-Lin = 2e-6
+Wopt=30e-6
+Iopt=2e-6
+L = 2e-6
 Wout=5e-6
 Lout=350e-9
 IDout=5e-6
@@ -75,6 +54,20 @@ f_sampling=20e3                 #sampling frequency of the ADC
 #Execution parameters:
 ngtbc=3 #Number of gains to be checked
 
+
+#List of all circuits that will be checked
+circuits=["FreqComp_Both_NoBias"] #"FreqComp_PoleSplit_InclR"
+#One cps for gains of 200M or larger, and other for gains of 200M or lower. At the end I use only one value
+CpsDefaultBIG='5p'
+CpsDefaultSMALL='5p'
+RpsDefault=200000 #None for 1/gm4
+Rph1Default=4000
+PrintINFO_Before=False
+RootLocus_Feasibility=False
+RootLocus_Value=True
+#circuits=["FreqComp_PoleSplit_NoR_NoBias","FreqComp_PoleSplit_NoR","FreqComp_PoleSplit_InclR","FreqComp_PoleSplit_InclR_NoBias", "FreqComp_Phantom", "FreqComp_Phantom_NoBias","FreqComp_Both_NoBias"]
+
+
 for circuit in circuits:
     Name=circuit
     test=False
@@ -86,11 +79,9 @@ for circuit in circuits:
     print("CIRCUIT SET: "+Name)
 
     #Loading model parameters into the .cir
-    OhmNMOS=300
-    OhmPMOS=300
-    ###############????????????
-    #Paste here process data at https://wiki-bsse.ethz.ch/display/DBSSEVLSI/EPFL-EKV+model+of+the+XFAB-xh018+process+for+simplified+design
-    ###############????????????
+    #######???????????????????????????????
+    #COPY HERE PROCESS PARAMETERS
+    #######???????????????????????????????
 
     reference='Gm_M1_XU1'
     i1.defPar('c_dg_XU1', 0)
@@ -98,9 +89,9 @@ for circuit in circuits:
     i1.defPar('c_dg_XU2', 0)
 
     try:
-        i1.defPar('W', Win)
-        i1.defPar('ID', IDin)
-        i1.defPar('L', Lin)
+        i1.defPar('W', Wopt)
+        i1.defPar('ID', Iopt)
+        i1.defPar('L', L)
         print('single-stage parameters assigned')
     except:
         print('single-stage parameters not needed')
@@ -114,16 +105,16 @@ for circuit in circuits:
     except:
         print('two-stage ouput parameters not needed')
     try:
-        i1.defPar('IDas', IDin*2)
-        i1.defPar('Was', Win*2)
-        i1.defPar('Lin', Lin)
+        i1.defPar('IDas', Iopt*2)
+        i1.defPar('Was', Wopt*2)
+        i1.defPar('Lin', L)
         print('input balanced CS parameters assigned')
     except:
         print('input antiseries not needed')
     try:
         i1.defPar('Wcm', Wcm)
         i1.defPar('Lcm', Lcm)
-        i1.defPar('IDasPMOS', -IDin*2)
+        i1.defPar('IDasPMOS', -Iopt*2)
         print('current mirror parameters assigned')
     except:
         print('no current mirrors')
@@ -137,11 +128,12 @@ for circuit in circuits:
     try:
         i1.defPar('Wbcm', Wbcm)
         i1.defPar('Lbcm', Lbcm)
-        i1.defPar('IDas', IDin*2)
+        i1.defPar('IDas', Iopt*2)
         print('output bias equivalent parameters assigned')
     except:
         print('no input bias equivalent')
 
+    #t_ox, Vth, n, u0, E_crit and theta, for both NMOS and PMOS is defined locally since it is confidential data.
     i1.defPar('IG', IG)
     i1.defPar('Ce', Ce)
     i1.defPar('Ree', Ree)
@@ -187,7 +179,7 @@ for circuit in circuits:
         i1.defPar('gain', gain)
         id=id+1
         htmlPage('Compensation, gain: '+str(gain))
-        if PrintPreCompensationInformation:
+        if PrintINFO_Before:
             #PRINT SUMMARY ABOUT FREQUENCY RESPONSE BEFORE COMEPNSATION
             head2html('Gain poles before Ph')
             head2html('Check loopgain (must be equal to loopgain study depsite adding Chp1,Rph=0)')
@@ -228,7 +220,7 @@ for circuit in circuits:
             text2html('Bandwidth: '+str(format(f_h,'.3E'))+' Hz')
             del asymptotic, gaing, loopgain, servo, direct, gainpz, servoData
 
-        if BruteRootLocus:
+        if RootLocus_Feasibility:
             #ROOT LOCUS BRUTE ANALYSIS
             head2html('Compensation pole-splitting. Sweep.')
             gm4=i1.getParValue('g_m_XU4')
@@ -303,7 +295,7 @@ for circuit in circuits:
                 print('could not print root locus sweep')
 
         #SELECTED VALUES
-        if SelectiveRootLocus:
+        if RootLocus_Value:
             head2html('Compensation pole-splitting. Selected values.')
             gm4=i1.getParValue('g_m_XU4')
             try:
