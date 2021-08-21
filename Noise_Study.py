@@ -8,20 +8,30 @@ from mpl_toolkits.mplot3d import Axes3D
 #import matplotlib.pyplot as plt
 
 def AssignProcessParameters(self):
+    """
+    Sets simplified EKV parameters
+
+    """
     #######???????????????????????????????
-    #COPY HERE PROCESS PARAMETERS
+    #COPY HERE PROCESS PARAMETERS AVAILABLE IN THE WIKI
+    #ELSE, THE SCRIPT USES DEFAULT CMOS18 EKV PARAMETERS FROM BINKLEY
     #######???????????????????????????????
     pass
 
 def LoadBasicCircuit(Name):
-    head2html('Circuit data')
-    img2html(Name+'.svg',600)
-    makeNetlist(Name+'.asc',Name)
-    netlist2html(Name+'.cir')
-    i1=instruction()
-    i1.setCircuit(Name+'.cir')
+    """
+    Loads SLiCAP netlist and assigns EKV paramaters
+
+    """
+    head2html('Circuit data')     #Creates HTML section for the netlist analysis results
+    img2html(Name+'.svg',600)     #Plots the schematic into the HTML section
+    makeNetlist(Name+'.asc',Name) #Creates a netlist .cir from a LTSpice schematic .asc
+    netlist2html(Name+'.cir')     #Shows the netlist in the HTML section
+    i1=instruction()              #Creates object to analize
+    i1.setCircuit(Name+'.cir')    #Defines the netlist to be analyzed
     print("Circuit set")
-    AssignProcessParameters(i1)
+    AssignProcessParameters(i1)   #Assigns the EKV process paramters to the elements of the netlist
+    # Declares model specefications
     i1.defPar('IG', IG)
     i1.defPar('Ce', Ce)
     i1.defPar('Ree', Ree)
@@ -29,26 +39,27 @@ def LoadBasicCircuit(Name):
     return i1
 
 def PlotAllSpectrum(self, Name, sel_gain=700e6, sel_W=30e-6, sel_I=2e-6, sel_L=2e-6, NEF=1, output=True, input=True, membrane=True):
-    self.defPar('L', sel_L)
-    self.defPar('W', sel_W)     #Optimum with obtained in Simulation #3
-    self.defPar('ID', sel_I)    #Worst case
-    self.defPar('gain', sel_gain)
-    self.setSimType('numeric')   #To avoid unnecesary computation effort by replacing
-                               #with numeric values all variables whose value we know.
-                               #Applicable to all variables but W, ID and gain.
+    self.defPar('L', sel_L)      # Variable
+    self.defPar('W', sel_W)      # Variable
+    self.defPar('ID', sel_I)     # Variable
+    self.defPar('gain', sel_gain)# Variable
+    self.setSimType('numeric')   # Avoids unnecesary computation effort by replacing
+                                 #with numeric values all variables whose value we know.
+                                 #Applicable to all variables but W, ID and gain.
     self.setGainType('vi')       #to obtain transfer functions
     self.setDataType('noise')    #to calculate noise equations from noise sources at the .cir
     self.setSource('I1_XU1')     #the only noise source in the model is the controller's noise equivalent
-    self.setDetector('V_out')    #the detector where we measure the noise (input of the ADC = output of the amplifier)
-    result = self.execute()
-    result.onoise=result.onoise*NEF
-    if output:
+    self.setDetector('V_out')    #the detector where we measure the output referred noise (input of the ADC = output of the amplifier)
+    result = self.execute()      #obtain equations
+    result.onoise=result.onoise*NEF #correct the output referred noise taking into account the NEF from the input stage biasing estimated in the script "Stages study"
+    result.inoise=result.inoise*NEF #correct the input referred noise taking into account the NEF from the input stage biasing estimated in the script "Stages study"
+    if output: #plot output referred spectrum
         figOnoiseSpec=plotSweep('onoise_spect'+Name+str(sel_gain),'Output referred noise sprectrum ('+Name+')', result, 8e-3, 2e4, 200, funcType='onoise', show=False, yLim = [10**-20,2*10**-9]) #plot the spectrum
         fig2html(figOnoiseSpec, 800)
-    if input:
+    if input:  #plot input referred spectrum
         figInoiseSpec=plotSweep('inoise_spect'+Name+str(sel_gain),'Input referred noise sprectrum('+Name+')', result, 8e-3, 2e4, 200, funcType='inoise', show=False) #plot the spectrum
         fig2html(figInoiseSpec, 800)
-    if membrane:
+    if membrane: #plot membrane referred spectrum
         self.setSource('I1')
         result2 = self.execute()
         result2.onoise=result.onoise*NEF
@@ -62,47 +73,43 @@ print("Project inititated")
 ini.MaximaTimeOut = 600         #Some extra time to allow the computer to calculate integrals.
 ini.plotFontSize=14
 
-#OBTAINED DURING THIS SCRIPT:
-Wopt=30e-6
-Iopt=2e-6
+#VARIABLES TO ADJUST DURING THIS SCRIPT:
+Wopt=30e-6                      #Transistor width -> Obtained in Simulation 3
+Iopt=2e-6                       #Drain current bias first stage -> Obtained in Simulation 4
+L = 2e-6                        #Transistor length -> Obtained in Simulation 5
 
-#DATA OBTAINED IN LATER STAGES
+#VARIABLE OBTAINED IN SCRIPT "STAGES STUDY"
 NEF=1.25
 
-# Declaring the specs
-IG = 0                          #Gate current is neglectible for optimization
-Ce = 5e-12                      #Neuron and electrode impedances values are calculated as explained in the introduction (Wiki).
-Ree = 1500e9
-Rs = 100e6
-Cjm=0.1e-12
-Rjm=1e9
-Rm=100e6
-Cm=100e-12
-L = 2e-6
-f_min=1e-4                       #In the second round we reduce the BW range to the neural main activity range
-f_max = 10000
-max_gain=20e9                   #Maxiumum gain of the TIA as explained in the amplifier type page (Wiki)
-min_gain=2e6                    #Minimum gain of the TIA as explained in the amplifier type page (Wiki)
-m_gain=200e6                     #An intermediate gain for checking purposes.
+#SPECIFICATIONS
+IG = 0                          #Gate current is neglectible
+Ce = 5e-12                      #Electrode impedance
+Ree = 1500e9                    #Electrode resistance
+Rs = 100e6                      #Solution resistance
+f_min=1e-4                      #Minimum interest frequency (aprox. DC)
+f_max = 10000                   #Maximum interest frequency
+max_gain=20e9                   #Maxiumum gain of the TIA
+min_gain=2e6                    #Minimum gain of the TIA
+m_gain=200e6                    #Intermediate gain of the TIA
 
 
-res=10                          #-bit
-vRange=2                        #V
-f_sampling=20e3                 #sampling frequency of the ADC
-noise_budget_vs_feedback=50/100 #the noise budget of the amplifier is splitted 50-50 between the feedback network and the controller
+res=10                          #Resolution (x-bit) of the ADC
+vRange=2                        #Voltage range of the ADC
+f_sampling=20e3                 #Sampling frequency of the ADC
+noise_budget_vs_feedback=50/100 #Noise budget of the amplifier: splitted 50-50 between the feedback network and the controller.
 
 
-#Execution parameters:
-Name='NoiseController'
-Optimization3D=False
-IDpick=True
-lengthChecks=False #not updated (automatic clustering? would be cool)
-NoiseReport=False
-if NoiseReport:  #bug: if noisereport activated along with others the graphs are not plotted correctly. revise later
+#EXECUTION PARAMETERS:
+Name='NoiseController'          #Netlist selection (NoiseControler vs. Noise)
+Optimization3D=False            #Generate 3-D graphs to pick Wopt
+IDpick=True                     #Generate 2-D graphs to pick Iopt
+lengthChecks=False              #Generate comparisons to pick L
+NoiseReport=False               #Generate noise results summary (spectrums, rms)
+if NoiseReport:
     Optimization3D=False
     IDpick=False
     lengthChecks=False
-NoiseAnalysis=False
+NoiseAnalysis=False             #Generate noise spectrum decomposition into colors
 
 #SIMULATION #3
 ###############################################################################
@@ -115,19 +122,17 @@ NoiseAnalysis=False
 ###############################################################################
 ###############################################################################
 
-#Establish noise target
+#Establishes noise target based on ADC quantization noise
 LSB=vRange/(2**res)                                             #LSB of the ADC
-target=LSB/(sp.sqrt(12))*(sp.sqrt(noise_budget_vs_feedback))   #total noise target
-print(sp.N(LSB/(sp.sqrt(12)),4))
-print(sp.N(target),4)
-
-#Loading simplified model (.cir)
+target=LSB/(sp.sqrt(12))*(sp.sqrt(noise_budget_vs_feedback))    #quantization noise * budget ratio by the controller
+print("Qnoise: "+str(sp.N(LSB/(sp.sqrt(12)),4)))
+print("Target controller: "+str(sp.N(target),4))
 
 #Name='NoiseControllerPMOS'  #Activate to simulate for PMOS
 htmlPage('Controller noise optimization')
-i1=LoadBasicCircuit(Name)
+i1=LoadBasicCircuit(Name)                                       #Loads the noise model
 i1.defPar('L', L)
-ID  = sp.Symbol('ID')
+ID  = sp.Symbol('ID')                                           #Creates the symbolic variables
 W  = sp.Symbol('W')
 elementData2html(i1.circuit)
 params2html(i1.circuit)
@@ -136,13 +141,13 @@ print("Parameters assigned")
 
 #Setting simulation config
 print("Calculating noise")
-i1.setSimType('numeric')   #To avoid unnecesary computation effort by replacing
+i1.setSimType('numeric')   #Avoids unnecesary computation effort by replacing
                            #with numeric values all variables whose value we know.
                            #Applicable to all variables but W, ID and gain.
-i1.setGainType('vi')       #to obtain transfer functions
-i1.setDataType('noise')    #to calculate noise equations from noise sources at the .cir
-#i1.setSource('I1_XU1')     #nt necessary: output-referred calculation
-i1.setDetector('V_out')    #the detector where we measure the noise (input of the ADC = output of the amplifier)
+i1.setGainType('vi')       #Obtains transfer functions
+i1.setDataType('noise')    #Calculates noise equations from noise sources at the .cir
+#i1.setSource('I1_XU1')    #Not necessary: output-referred calculation
+i1.setDetector('V_out')    #The detector where we measure the output referred noise (input of the ADC = output of the amplifier)
 
 
 if Optimization3D:
@@ -155,7 +160,7 @@ if Optimization3D:
 
     i1.defPar('gain', max_gain)
     t1 = time()
-    result = i1.execute()   #calculate all noise expressions
+    result = i1.execute()   #Calculate all noise expressions for gain=20GV/A
     t2 = time()
     print(t2-t1, "s\n")
     t3 = time()
@@ -193,7 +198,7 @@ if Optimization3D:
     img2html('fullnoise_simplifiedmodel_maxgain_zoom.svg',600)
     """
 
-    print("Creating plot")
+    print("Creating plot")  #Plot the 3-D graph of onoise rms vs ID vs W, gain=200GV/A
     numW = 100
     numI = 10
     widths = np.linspace(1e-6, 100e-6, num=numW) # X variable
@@ -230,12 +235,12 @@ if Optimization3D:
     head2html("Graph for gain=200MV/A")
     i1.defPar('gain', m_gain)
     t1 = time()
-    result = i1.execute()   #calculate all noise expressions
+    result = i1.execute()   #Calculate all noise expressions for gain=200MV/A
     t2 = time()
     print(t2-t1, "s\n")
     t3 = time()
 
-    print("Creating plot")
+    print("Creating plot")  #Plot the 3-D graph of onoise rms vs ID vs W, gain=200MV/A
     numW = 100
     numI = 10
     widths = np.linspace(1e-6, 100e-6, num=numW) # X variable
@@ -272,12 +277,12 @@ if Optimization3D:
     head2html("Graph for gain=2MV/A")
     i1.defPar('gain', min_gain)
     t1 = time()
-    result = i1.execute()   #calculate all noise expressions
+    result = i1.execute()   #Calculate all noise expressions for gain=2MV/A
     t2 = time()
     print(t2-t1, "s\n")
     t3 = time()
 
-    print("Creating plot")
+    print("Creating plot") #Plot the 3-D graph of onoise rms vs ID vs W, gain=2MV/A
     numW = 100
     numI = 10
     widths = np.linspace(1e-6, 100e-6, num=numW) # X variable
@@ -328,18 +333,18 @@ if IDpick:
 
     head2html("RMS Noise with Wopt, worst case gain (20GV/A)")
 
-    i1.defPar('W', Wopt)     #Optimum with obtained in Simulation #3
-    i1.defPar('gain', max_gain)    #Worst case
+    i1.defPar('W', Wopt)       #Optimum with obtained in Simulation #3
+    i1.defPar('gain', max_gain)
     ID  = sp.Symbol('ID')      #Parameter to sweep
 
     #Setting simulation config
-    i1.setSimType('numeric')   #To avoid unnecesary computation effort by replacing
+    i1.setSimType('numeric')   #Avoids unnecesary computation effort by replacing
                                #with numeric values all variables whose value we know.
                                #Applicable to all variables but W, ID and gain.
-    i1.setGainType('vi')       #to obtain transfer functions
-    i1.setDataType('noise')    #to calculate noise equations from noise sources at the .cir
-    #i1.setSource('I1_XU1')     #the only noise source in the model is the controller's noise equivalent
-    i1.setDetector('V_out')    #the detector where we measure the noise (input of the ADC = output of the amplifier)
+    i1.setGainType('vi')       #Obtains transfer functions
+    i1.setDataType('noise')    #Calculates noise equations from noise sources at the .cir
+    #i1.setSource('I1_XU1')    #Not necessary: output-referred calculation
+    i1.setDetector('V_out')    #The detector where we measure the output referred noise (input of the ADC = output of the amplifier)
 
     result = i1.execute()
 
@@ -363,8 +368,6 @@ if IDpick:
     ax.set_ylabel('$V_{onoise}$ [mV(rms)]', fontsize=12)
     plt.grid(which='both', axis='both')
     plt.show()
-    #t4 = time()
-    #print(t4-t3, "s\n")
 
     fig.savefig('./img/setIDplot.svg')
     img2html('setIDplot.svg',600)
@@ -392,18 +395,18 @@ if IDpick:
 
     head2html("RMS Noise with Wopt, intermediate case gain (200MV/A)")
 
-    i1.defPar('W', Wopt)     #Optimum with obtained in Simulation #3
-    i1.defPar('gain', m_gain)    #Worst case
+    i1.defPar('W', Wopt)       #Optimum with obtained in Simulation #3
+    i1.defPar('gain', m_gain)
     ID  = sp.Symbol('ID')      #Parameter to sweep
 
     #Setting simulation config
-    i1.setSimType('numeric')   #To avoid unnecesary computation effort by replacing
+    i1.setSimType('numeric')   #Avoids unnecesary computation effort by replacing
                                #with numeric values all variables whose value we know.
                                #Applicable to all variables but W, ID and gain.
-    i1.setGainType('vi')       #to obtain transfer functions
-    i1.setDataType('noise')    #to calculate noise equations from noise sources at the .cir
-    #i1.setSource('I1_XU1')     #the only noise source in the model is the controller's noise equivalent
-    i1.setDetector('V_out')    #the detector where we measure the noise (input of the ADC = output of the amplifier)
+    i1.setGainType('vi')       #Obtains transfer functions
+    i1.setDataType('noise')    #Calculates noise equations from noise sources at the .cir
+    #i1.setSource('I1_XU1')    #Not necessary: output-referred calculation
+    i1.setDetector('V_out')    #The detector where we measure the output referred noise (input of the ADC = output of the amplifier)
 
     result = i1.execute()
 
@@ -427,17 +430,15 @@ if IDpick:
     ax.set_ylabel('$V_{onoise}$ [mV(rms)]', fontsize=12)
     plt.grid(which='both', axis='both')
     plt.show()
-    #t4 = time()
-    #print(t4-t3, "s\n")
 
     fig.savefig('./img/setIDplotmgain.svg')
     img2html('setIDplotmgain.svg',600)
 
     head2html("RMS Noise with Wopt, minimum (2MV/A)")
 
-    i1.defPar('W', Wopt)     #Optimum with obtained in Simulation #3
-    i1.defPar('gain', min_gain)    #Worst case
-    ID  = sp.Symbol('ID')      #Parameter to sweep
+    i1.defPar('W', Wopt)        #Optimum with obtained in Simulation #3
+    i1.defPar('gain', min_gain)
+    ID  = sp.Symbol('ID')       #Parameter to sweep
 
     #Setting simulation config
     i1.setSimType('numeric')   #To avoid unnecesary computation effort by replacing
@@ -470,8 +471,6 @@ if IDpick:
     ax.set_ylabel('$V_{onoise}$ [mV(rms)]', fontsize=12)
     plt.grid(which='both', axis='both')
     plt.show()
-    #t4 = time()
-    #print(t4-t3, "s\n")
 
     fig.savefig('./img/setIDplotmingain.svg')
     img2html('setIDplotmingain.svg',600)
@@ -490,25 +489,26 @@ if lengthChecks:
     # ID is set to 10^-5 since it is a good trade-off between noise reduction and efficiency.
     ###############################################################################
     ###############################################################################
-    i1.defPar('ID', Iopt)           #Optimum with obtained in Simulation #3
+    i1.defPar('ID', Iopt)           #Optimum with obtained in Simulation #4
     i1.defPar('gain', max_gain)
     print("Parameters assigned")
-    ini.stepFunction = False        #Fill the matrix with stepped numeric values, This is faster in this case
+    ini.stepFunction = False        #Fill the matrix with stepped numeric values
 
-    op_lengths=[350e-9,1e-6,2e-6,3.5e-6,5e-6] #try for different lengths
-    op_widths=[200e-6, 80e-6, 40e-6, 20e-6, 17.5e-6] #optimum widths calculated for the previous lengths.
-                                      #they were calculated using this same file changing L at the beginning
+    #THIS TWO VECTORS SAVE THE Wopt AND IDopt FOR EXECUTIONS WITH DIFFERENT L TO COMPARE ALL OF THEM AND DECIDE UPON Lopt
+    op_lengths=[350e-9,1e-6,2e-6,3.5e-6,5e-6]
+    op_widths=[200e-6, 80e-6, 40e-6, 20e-6, 17.5e-6]
+
     stepArray=[op_widths, op_lengths]
     i1.setGainType('vi')       #generate laplace transfers
     i1.setDataType('noise')    #to calculate noise equations from noise sources at the .cir
     i1.setDetector('V_out')    #the detector where we measure the noise (input of the ADC = output of the amplifier)
     i1.setSimType('numeric')   #use numeric simulations
-    i1.setStepMethod('array')  #try the three cases
+    i1.setStepMethod('array')  #try all the combinations
     i1.setStepVars(['W','L'])
     i1.setStepArray(stepArray)
     i1.stepOn()
     result=i1.execute()
-    figOnoiseC=plotSweep('OnoiseC','ADC-referred noise sprectrum', result, f_min, f_max, 200, funcType='onoise', show='False') #plot the spectrum
+    figOnoiseC=plotSweep('OnoiseC','ADC-referred noise sprectrum', result, f_min, f_max, 200, funcType='onoise', show='False') #plot the spectrums
     head2html('Noise spectrum (only controller)')
     fig2html(figOnoiseC, 800)
     stepArray2html(i1.stepVars, i1.stepArray)
@@ -516,24 +516,23 @@ if lengthChecks:
     text2html('ID='+str(format(Iopt,'.1E'))+'A')
 
 
-
-################### NOISE COMPARISON WITH HAM'S #############################
+################### NOISE REPORT AND COMPARISON WITH HAM ET AL ESTIMATED VALUE #############################
 
 if NoiseReport:
     htmlPage("Report noise estimations")
 
-    i1.defPar('W', Wopt)     #Optimum with obtained in Simulation #3
-    i1.defPar('ID', Iopt)    #Worst case
+    i1.defPar('W', Wopt)     #Optimum width obtained in Simulation #3
+    i1.defPar('ID', Iopt)    #Optimum ID obtained in Simulation #4
     gain_sel  = sp.Symbol('gain')  #Parameter to sweep
 
     #Setting simulation config
-    i1.setSimType('numeric')   #To avoid unnecesary computation effort by replacing
+    i1.setSimType('numeric')   #Avoids unnecesary computation effort by replacing
                                #with numeric values all variables whose value we know.
                                #Applicable to all variables but W, ID and gain.
-    i1.setGainType('vi')       #to obtain transfer functions
-    i1.setDataType('noise')    #to calculate noise equations from noise sources at the .cir
+    i1.setGainType('vi')       #Obtains transfer functions
+    i1.setDataType('noise')    #Calculates noise equations from noise sources at the .cir
     i1.setSource('I1_XU1')     #the only noise source in the model is the controller's noise equivalent
-    i1.setDetector('V_out')    #the detector where we measure the noise (input of the ADC = output of the amplifier)
+    i1.setDetector('V_out')    #The detector where we measure the output referred noise (input of the ADC = output of the amplifier)
     resultA = i1.execute()
 
     i1.setSource('I1')
@@ -555,8 +554,6 @@ if NoiseReport:
 
 
     for i in range(ngtbc):
-            #text2html('-------------')
-            #text2html('Gain [MV/A]: '+str(gain_sel_lists[i]*pow(10,-6)))
             # Convert sympy function to numpy function for current grid point
             onoiseF = sp.lambdify(ini.frequency, onoise(gain_sel_lists[i]))
             inoiseF = sp.lambdify(ini.frequency, inoise(gain_sel_lists[i]))
@@ -575,7 +572,7 @@ if NoiseReport:
 
     head2html('Vrms noise vs gain (NEF included)')
 
-    text2html('Output referred noise (DC-10kHz) [mVrms]')
+    text2html('Output referred noise (DC-10kHz) [mVrms]') #PLOT RMS NOISE (OUTPUT REFERRED)
     fig = plt.figure(figsize=(15,10))
     ax =  fig.add_subplot(1,1,1)
     ax.plot(X, MyYo, label='Output referred noise (DC-10kHz) [mVrms]')
@@ -589,7 +586,7 @@ if NoiseReport:
     fig.savefig('./img/ONOISEREPORT.svg')
     img2html('ONOISEREPORT.svg',600)
 
-    text2html('Input referred noise (DC-10kHz) [nArms]')
+    text2html('Input referred noise (DC-10kHz) [nArms]') #PLOT RMS NOISE (INPUT REFERRED)
     fig = plt.figure(figsize=(15,10))
     ax =  fig.add_subplot(1,1,1)
     ax.plot(X, MyYi, label='Input referred noise (DC-10kHz) [nArms]')
@@ -602,7 +599,7 @@ if NoiseReport:
     fig.savefig('./img/INOISEREPORT.svg')
     img2html('INOISEREPORT.svg',600)
 
-    text2html('Membrane referred noise (DC-10kHz) [pArms]')
+    text2html('Membrane referred noise (DC-10kHz) [pArms]') #PLOT RMS NOISE (MEMBRANE REFERRED)
     fig = plt.figure(figsize=(15,10))
     ax =  fig.add_subplot(1,1,1)
     ax.plot(X, MyYm, label='Membrane referred noise (DC-10kHz) [pArms]')
@@ -617,9 +614,9 @@ if NoiseReport:
     img2html('MNOISEREPORT.svg',600)
 
 
-    head2html('Spectrum plots for gain=700MV/A')
+    head2html('Spectrum plots for gain=700MV/A')  #PLOT OUTPUT REFERRED SPECTRUM (GAIN=700MV/A)
     i1.defPar('gain', 700e6)
-    i1.setSource('I1_XU1')     #the only noise source in the model is the controller's noise equivalent
+    i1.setSource('I1_XU1')
     result = i1.execute()
     i1.setSource('I1')
     result2 = i1.execute()
@@ -632,9 +629,9 @@ if NoiseReport:
     figMnoiseSpec=plotSweep('mnoise_spect','Membrane referred noise sprectrum. Gain=700M.', result2, 8e-3, 2e4, 200, funcType='inoise', show=False) #plot the spectrum
     fig2html(figMnoiseSpec, 800)
 
-    head2html('Spectrum plots for gain=200MV/A')
+    head2html('Spectrum plots for gain=200MV/A') #PLOT OUTPUT REFERRED SPECTRUMS (GAIN=200MV/A)
     i1.defPar('gain', 200e6)
-    i1.setSource('I1_XU1')     #the only noise source in the model is the controller's noise equivalent
+    i1.setSource('I1_XU1')
     result = i1.execute()
     i1.setSource('I1')
     result2 = i1.execute()
@@ -648,9 +645,9 @@ if NoiseReport:
     figMnoiseSpec=plotSweep('mnoise_spect_200','Membrane referred noise sprectrum. Gain=200M.', result2, 8e-3, 2e4, 200, funcType='inoise', show=False) #plot the spectrum
     fig2html(figMnoiseSpec, 800)
 
-    head2html('Spectrum plots for gain=2MV/A')
+    head2html('Spectrum plots for gain=2MV/A') #PLOT OUTPUT REFERRED SPECTRUMS (GAIN=2MV/A)
     i1.defPar('gain', 2e6)
-    i1.setSource('I1_XU1')     #the only noise source in the model is the controller's noise equivalent
+    i1.setSource('I1_XU1')
     result = i1.execute()
     i1.setSource('I1')
     result2 = i1.execute()
@@ -659,7 +656,7 @@ if NoiseReport:
     figOnoiseSpec=plotSweep('onoise_spect_2','Output referred noise sprectrum. Gain=2M.', result, 8e-3, 2e4, 200, funcType='onoise', show=True) #plot the spectrum
     fig2html(figOnoiseSpec, 800)
 
-    head2html('Spectrum plots for gain=20GV/A')
+    head2html('Spectrum plots for gain=20GV/A') #PLOT OUTPUT REFERRED SPECTRUMS (GAIN=20GV/A)
     i1.defPar('gain', 20e9)
     i1.setSource('I1_XU1')     #the only noise source in the model is the controller's noise equivalent
     result = i1.execute()
@@ -671,7 +668,7 @@ if NoiseReport:
     fig2html(figOnoiseSpec, 800)
 
 
-    head2html('Comparison Ham')
+    head2html('Comparison Ham') #Compare results to Ham et all estimated values
     mnoiseF = sp.lambdify(ini.frequency,  result2.inoise)
     HamYm = np.sqrt(quad(mnoiseF, 1, 4700)[0])*1e12*NEF # pV
     text2html('Membrane referred noise (1Hz-4.7kHz as measured by Ham) [pArms]: '+str(HamYm))
@@ -681,12 +678,12 @@ if NoiseReport:
     text2html("!! i don't know which one he measured")
 
 
-if NoiseAnalysis:
-    Name="NoiseController_onlypink"
+if NoiseAnalysis: #Decompose the noise spectrum into
+    Name="NoiseController_onlypink"  #Pink noise
     i1=LoadBasicCircuit(Name)
-    Name="NoiseController_onlywhite"
+    Name="NoiseController_onlywhite" #White noise
     i2=LoadBasicCircuit(Name)
-    Name="NoiseController_onlyblue"
+    Name="NoiseController_onlyblue"  #Blue noise
     i3=LoadBasicCircuit(Name)
 
     htmlPage("Gain 200MV A")
