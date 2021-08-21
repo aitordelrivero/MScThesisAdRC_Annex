@@ -8,9 +8,23 @@ from math import ceil, prod, log
 from itertools import product
 from scipy.integrate import quad
 
+def AssignProcessParameters(self):
+    """
+    Sets simplified EKV parameters
+
+    """
+    #######???????????????????????????????
+    #COPY HERE PROCESS PARAMETERS AVAILABLE IN THE WIKI
+    #ELSE, THE SCRIPT USES DEFAULT CMOS18 EKV PARAMETERS FROM BINKLEY
+    #######???????????????????????????????
+    pass
+
 def Cadencecsv2traces(csvFile, absx = False, logx = False, absy = False, logy = False, limiter=None):
     """
-    THIS WORKS FOR MULTIVARIABLE SWEEPING. THE FUNCTION IS ALMOST EQUAL TO THE ORIGINAL IN SLICAP.
+    Note: is similar to "csv2traces" in https://github.com/Lenty/SLiCAP_python.
+    The csv delimiter is modifed to understand the multi-sweep Cadence csv generation terminology.
+    There are additional functions to process the csv data (abs, log)
+    "limiter" fixes the bug in transient simulations, where the last pairs (X,Y) are not well represented
 
     Generates a dictionary with traces (key = label, value = trace object) from
     data from a csv file. The CSV file should have the following structure:
@@ -94,7 +108,6 @@ def Cadencecsv2traces(csvFile, absx = False, logx = False, absy = False, logy = 
                         print("Could not calculate the log10 of the yData of:", ini.csvPath + csvFile)
                 traceDict[labels[j]].xData.append(xData)
                 traceDict[labels[j]].yData.append(yData)
-    #print("Available data")
     for label in labels:
             traceDict[label].xData = np.array(traceDict[label].xData)
             traceDict[label].yData = np.array(traceDict[label].yData)
@@ -102,66 +115,65 @@ def Cadencecsv2traces(csvFile, absx = False, logx = False, absy = False, logy = 
     return traceDict
 
 def LoadFinalCircuit(Parasitics=False,LoopgainMag=True,LoopgainPhs=True):
+    """
+    Returns the Loop Gain symbolic analysis estimation of the final circuit
 
+    Select Parasitcs=True for symbolic estimations considering the parasitics after extraction in Cadence.
+
+    """
+    #Frequency limits to be plot
     f_check_max=1e10
     f_check_min=1e-3
 
-    # Transistor sizing (Instance i1)
-    Win=30e-6
-    IDin=2e-6
-    Lin = 2e-6
-    Wout=5e-6
-    Lout=350e-9
-    IDout=5e-6
-    Lcm=5e-6
-    Wcm=7.5e-6
-    Wb=5e-6
-    Lb=1.5e-6
-    Wbcm=8e-6
-    Lbcm=1.5e-6
+    # RESULTS COMING FROM OTHER SCRIPTS
+    Wopt=30e-6                      #Optimum width for the input stage (from Script "Noise study")
+    Iopt=2e-6                       #Optimum current for the input stage (from Script "Noise study")
+    L = 2e-6                        #Optimum length for the input stage (from Script "Noise study")
+    Wout=5e-6                       #Output stage transistor width (From Script "Stages Study")
+    Lout=350e-9                     #Output stage transistor length (From Script "Stages Study")
+    IDout=5e-6                      #Output stage transistor drain current bias (From Script "Stages Study")
+    Lcm=5e-6                        #1st stage Top biasing transistor length (From Script "Stages Study")
+    Wcm=7.5e-6                      #1st stage Top biasing transistor width (From Script "Stages Study")
+    Wb=5e-6                         #2nd stage biasing transistor width (From Script "Stages Study")
+    Lb=1.5e-6                       #2nd stage biasing transistor length (From Script "Stages Study")
+    Wbcm=8e-6                       #1st stage Bottom biasing transistor width (From Script "Stages Study")
+    Lbcm=1.5e-6                     #1st stage  Bottom biasing transistor length (From Script "Stages Study")
 
-    CpsDefault='5p'
-    RpsDefault=200000 #None for 1/gm4
-    Rph1Default=4000
+    CpsDefault='5p'                 #Pole splitting capacitance  (from Script Freq. Compensation Study)
+    RpsDefault=200000               #Pole splitting resistance (from Script Freq. Compensation Study)
+    Rph1Default=4000                #Phantom zero splitting resistance (from Script Freq. Compensation Study)
 
     CompensationArea=26.5e-6**2+(4+1)*350e-9*10e-6+1e-6*10e-6 #Cps+RpsPMOS+RpsNMOS+Rph1 areas
 
-    C_par_CM=10.5e-15
-    C_par_OUT1=25.03e-15
-    C_par_NET018=29.73e-15
+    CparX=10.5e-15                                            #Parasitic at node X (from Cadence)
+    CparC=25.03e-15                                           #Parasitic at node C (from Cadence)
+    CparY=29.73e-15                                           #Parasitic at node Y (from Cadence)
 
 
-    #Model parameters and specifications
-    IG = 0                          #Gate current is neglectible for optimization
-    Ce = 5e-12                      #Neuron and electrode impedances values are calculated as explained in the introduction (Wiki).
-    Ree = 1500e9
-    Rs = 100e6
-    Cjm = 0.1e-12
-    Rjm = 1e9
-    Rm = 100e6
-    Cm = 100e-12
-    f_min = 10e-4                     #Hz (ideally DC, but some margin to avoid results involving infinity)
-    f_max = 10e3                      #Hz (maximum frequency of the input signal)
-    max_gain = 20e9                   #Maxiumum gain of the TIA as explained in the amplifier type page (Wiki)
-    min_gain = 2e6                    #Minimum gain of the TIA as explained in the amplifier type page (Wiki)
-    m_gain = 20e7                     #An intermediate gain for checking purposes.
+    IG = 0                          #Gate current is neglectible
+    Ce = 5e-12                      #Electrode impedance
+    Ree = 1500e9                    #Electrode resistance
+    Rs = 100e6                      #Solution resistance
+    f_min=1e-4                      #Minimum interest frequency (aprox. DC)
+    f_max = 10000                   #Maximum interest frequency
+    max_gain=20e9                   #Maxiumum gain of the TIA
+    min_gain=2e6                    #Minimum gain of the TIA
+    m_gain=200e6                    #Intermediate gain of the TIA
 
-    Cadc=5e-12
-    Cgm=0
+    Cadc=5e-12                      #Equivalent input capacitance of the ADC
+    Cgm=0                           #Equivalent capacitance of the feedback network
     Cload=Cadc+Cgm
+    res=10                          #Resolution (x-bit) of the ADC
+    vRange=2                        #Voltage range of the ADC
+    f_sampling=20e3                 #Sampling frequency of the ADC
 
-    Vdd=3.3
+    Vdd=3.3                         #Power supply
 
-    #ADC specs
-    res=10                          #-bit
-    range=2                         #V
-    f_sampling=20e3                 #sampling frequency of the ADC
 
-    #Execution parameters:
     ngtbc=3 #Number of gains to be checked
 
 
-    #List of all circuits that will be checked
+    #Selection of estimations with or without parasitics
     if not Parasitics:
         circuit="FinalCircuit"
     if Parasitics:
@@ -174,32 +186,26 @@ def LoadFinalCircuit(Parasitics=False,LoopgainMag=True,LoopgainPhs=True):
     i1.setCircuit(Name+'.cir')          #load circuit
     print("-------------------")
     print("CIRCUIT SET: "+Name)
-
-
-    #Loading model parameters into the .cir
-    #######???????????????????????????????
-    #COPY HERE PROCESS PARAMETERS
-    #######???????????????????????????????
-
+    AssignProcessParameters(i1)
 
     if (Name=="CIRCUIT1" or Name=="CIRCUIT2" or Name=="CIRCUIT3" or Name=="CIRCUIT3b" or Name=="CIRCUIT5" or Name=="CIRCUIT6" or Name=="FinalCircuit" or Name=="ParasiticCM" or Name=="ParasiticNET108" or Name=="ParasiticOUT1" or Name=="AllParasitics"):
-        reference='Gm_M1_XU1'
-        i1.defPar('c_dg_XU1', 0)
+        reference='Gm_M1_XU1' #select loop reference source of the asymptotic gain model
+        i1.defPar('c_dg_XU1', 0) #eliminate local feedback loop around the reference
         print('loop gain reference assigned, and local loop in main signal path deleted')
     if (Name=="CIRCUIT3" or Name=="CIRCUIT3b" or Name=="CIRCUIT5" or Name=="CIRCUIT6" or Name=="FinalCircuit" or Name=="ParasiticCM" or Name=="ParasiticNET108" or Name=="ParasiticOUT1" or Name=="AllParasitics"):
-        i1.defPar('c_dg_XU3', 0)
-        i1.defPar('c_dg_XU2', 0)
+        i1.defPar('c_dg_XU3', 0) #eliminate local feedback loop around the reference
+        i1.defPar('c_dg_XU2', 0) #eliminate local feedback loop around the reference
         print('local loop in secondary signal path deleted')
     else:
         print('loop gain reference was not assigned')
-    try:
-        i1.defPar('W', Win)
-        i1.defPar('ID', IDin)
-        i1.defPar('L', Lin)
+    try: #Assigns variables to the input stage elements
+        i1.defPar('W', Wopt)
+        i1.defPar('ID', Iopt)
+        i1.defPar('L', L)
         print('single-stage parameters assigned')
     except:
         print('single-stage parameters not needed')
-    try:
+    try: #Assigns variables to the output stage elements
         i1.defPar('IDoutPMOS', -IDout)
         i1.defPar('Wout', Wout)
         i1.defPar('Lout', Lout)
@@ -208,52 +214,52 @@ def LoadFinalCircuit(Parasitics=False,LoopgainMag=True,LoopgainPhs=True):
         print('output parameters assigned')
     except:
         print('two-stage ouput parameters not needed')
-    try:
-        i1.defPar('IDas', IDin*2)
-        i1.defPar('Was', Win*2)
-        i1.defPar('Lin', Lin)
+    try: #Assigns variables to the balanced input stage elements
+        i1.defPar('IDas', Iopt*2)
+        i1.defPar('Was', Wopt*2)
+        i1.defPar('Lin', L)
         print('input balanced CS parameters assigned')
     except:
         print('input antiseries not needed')
-    try:
+    try: #Assigns variables to the input stage top biasing elements
         i1.defPar('Wcm', Wcm)
         i1.defPar('Lcm', Lcm)
-        i1.defPar('IDasPMOS', -IDin*2)
+        i1.defPar('IDasPMOS', -Iopt*2)
         print('current mirror parameters assigned')
     except:
         print('no current mirrors')
-    try:
+    try: #Assigns variables to the output stage biasing elements
         i1.defPar('Wb', Wb)
         i1.defPar('Lb', Lb)
         i1.defPar('IDout', IDout)
         print('output bias equivalent parameters assigned')
     except:
         print('no output bias equivalent')
-    try:
+    try: #Assigns variables to the input stage bottom biasing elements
         i1.defPar('Wbcm', Wbcm)
         i1.defPar('Lbcm', Lbcm)
-        i1.defPar('IDas', IDin*2)
+        i1.defPar('IDas', Iopt*2)
         print('output bias equivalent parameters assigned')
     except:
         print('no input bias equivalent')
     try:
-        i1.defPar('C_par_CM', C_par_CM)
-        print('parasitic C_par_CM set')
+        i1.defPar('CparX', CparX) #Assigns parasitic extraction values
+        print('parasitic CparX set')
     except:
-        print('parasitic C_par_CM not modeled')
+        print('parasitic CparX not modeled')
     try:
-        i1.defPar('C_par_OUT1', C_par_OUT1)
-        print('parasitic C_par_OUT1 set')
+        i1.defPar('CparC', CparC) #Assigns parasitic extraction values
+        print('parasitic CparC set')
     except:
-        print('parasitic C_par_OUT1 not modeled')
+        print('parasitic CparC not modeled')
     try:
-        i1.defPar('C_par_NET018', C_par_NET018)
-        print('parasitic C_par_NET018 set')
+        i1.defPar('CparY', CparY) #Assigns parasitic extraction values
+        print('parasitic CparY set')
     except:
-        print('parasitic C_par_NET018 not modeled')
+        print('parasitic CparY not modeled')
 
 
-    #t_ox, Vth, n, u0, E_crit and theta, for both NMOS and PMOS is defined locally since it is confidential data.
+    # Assigns model specefications
     i1.defPar('IG', IG)
     i1.defPar('Ce', Ce)
     i1.defPar('Ree', Ree)
@@ -261,6 +267,7 @@ def LoadFinalCircuit(Parasitics=False,LoopgainMag=True,LoopgainPhs=True):
     i1.defPar('Cload', Cload)
     print("Parameters assigned")
 
+    # Assigns compensation elements' values
     i1.defPar('Rps', RpsDefault)
     i1.defPar('Cps', CpsDefault)
     i1.defPar('Rph1', Rph1Default)
@@ -271,12 +278,10 @@ def LoadFinalCircuit(Parasitics=False,LoopgainMag=True,LoopgainPhs=True):
     i1.setDetector('V_out')  #the detector is the output (input of the ADC)
     i1.setLGref(reference) #reference source in the asymptotic model
     i1.setStepVar('gain')
+    #Estimates the loop gain of the amplifier
     i1.setGainType('loopgain')
     i1.setDataType('laplace')
     loopgain = i1.execute()
-
-
-    #print(loopgain.laplace[0])
     head2html('Bode plot. Loopgain.')
     result = [loopgain]
     if LoopgainMag:
@@ -288,14 +293,8 @@ def LoadFinalCircuit(Parasitics=False,LoopgainMag=True,LoopgainPhs=True):
     else:
         SLiCAPPlotSweepPhase="Void"
     print("Loopgain bode obtained")
+    #returns the loop gain
     return f_check_max,f_check_min,SLiCAPPlotSweepMag, SLiCAPPlotSweepPhase
-
-def AssignProcessParameters(self):
-    #Loading model parameters into the .cir
-    #######???????????????????????????????
-    #COPY HERE PROCESS PARAMETERS
-    #######???????????????????????????????
-    pass
 
 def LoadBasicCircuit(Name, Ce, Ree,Rs):
     i1=instruction()
@@ -309,54 +308,42 @@ def LoadBasicCircuit(Name, Ce, Ree,Rs):
     return i1
 
 def LoadNoiseSymbolic():
-    #OBTAINED DURING THIS SCRIPT:
-    Wopt=30e-6
-    Iopt=2e-6
+    Wopt=30e-6                      #Optimum width for the input stage (from Script "Noise study")
+    Iopt=2e-6                       #Optimum current for the input stage (from Script "Noise study")
+    L = 2e-6                        #Optimum length for the input stage (from Script "Noise study")
 
-    #DATA OBTAINED IN LATER STAGES
-    NEF=1.25
+    NEF=1.25                        #Noise Excess Factor, (from Script "Stage study")
 
-    # Declaring the parameters
-    IG = 0                          #Gate current is neglectible for optimization
-    Ce = 5e-12                      #Neuron and electrode impedances values are calculated as explained in the introduction (Wiki).
-    Ree = 1500e9
-    Rs = 100e6
-    Cjm=0.1e-12
-    Rjm=1e9
-    Rm=100e6
-    Cm=100e-12
-    L = 2e-6
-    f_min=1e-4                       #In the second round we reduce the BW range to the neural main activity range
-    f_max = 10000
-    max_gain=20e9                   #Maxiumum gain of the TIA as explained in the amplifier type page (Wiki)
-    min_gain=2e6                    #Minimum gain of the TIA as explained in the amplifier type page (Wiki)
-    m_gain=200e6                     #An intermediate gain for checking purposes.
+    IG = 0                          #Gate current is neglectible
+    Ce = 5e-12                      #Electrode impedance
+    Ree = 1500e9                    #Electrode resistance
+    Rs = 100e6                      #Solution resistance
+    f_min=1e-4                      #Minimum interest frequency (aprox. DC)
+    f_max = 10000                   #Maximum interest frequency
+    max_gain=20e9                   #Maxiumum gain of the TIA
+    min_gain=2e6                    #Minimum gain of the TIA
+    m_gain=200e6                    #Intermediate gain of the TIA
 
-    #ADC specs
-    res=10                          #-bit
-    vRange=2                        #V
-    f_sampling=20e3                 #sampling frequency of the ADC
-    noise_budget_vs_feedback=50/100 #the noise budget of the amplifier is splitted 50-50 between the feedback network and the controller
-
+    res=10                          #Resolution (x-bit) of the ADC
+    vRange=2                        #Voltage range of the ADC
+    f_sampling=20e3                 #Sampling frequency of the ADC
+    noise_budget_vs_feedback=50/100 #Noise budget of the amplifier: splitted 50-50 between the feedback network and the controller.
 
     #Execution parameters:
     ngtbc=100 #Number of gains to be checked
 
-
     #Establish noise target
     LSB=vRange/(2**res)                                             #LSB of the ADC
-    target=LSB/(sp.sqrt(12))*(sp.sqrt(noise_budget_vs_feedback))   #total noise target
+    target=LSB/(sp.sqrt(12))*(sp.sqrt(noise_budget_vs_feedback))    #quantization noise * budget ratio by the controller
 
-
-    #Loading simplified model (.cir)
+    #Obtain estimated noise
     Name='NoiseController'
-    #Name='NoiseControllerPMOS'  #Activate to simulate for PMOS
     htmlPage('Controller noise optimization')
-    i1=LoadBasicCircuit(Name,Ce, Ree,Rs)
-    i1.defPar('L', L)
-    i1.defPar('W', Wopt)     #Optimum with obtained in Simulation #3
-    i1.defPar('ID', Iopt)    #Worst case
-    gain_sel  = sp.Symbol('gain')  #Parameter to sweep
+    i1=LoadBasicCircuit(Name,Ce, Ree,Rs) #loads noise model
+    i1.defPar('L', L)                    #assigns paramters
+    i1.defPar('W', Wopt)
+    i1.defPar('ID', Iopt)
+    gain_sel  = sp.Symbol('gain')        #Parameter to sweep
     #Setting simulation config
     i1.setSimType('numeric')   #To avoid unnecesary computation effort by replacing
                                #with numeric values all variables whose value we know.
@@ -367,6 +354,7 @@ def LoadNoiseSymbolic():
     i1.setDetector('V_out')    #the detector where we measure the noise (input of the ADC = output of the amplifier)
     resultA = i1.execute()
 
+    #plot the rms onoise vs gain
     gain_sel_lists=np.geomspace(min_gain, max_gain, num=ngtbc, endpoint=True).tolist()
     X=np.geomspace(min_gain, max_gain, num=ngtbc, endpoint=True).tolist()
     MyYo  = np.zeros([ngtbc])
@@ -382,6 +370,7 @@ def LoadNoiseSymbolic():
     GraphNoiseRMS = plot('onoise_RMS_200', 'Output referred noise (RMS DC-10kHz)', 'log', SLiCAPconverted, xName = 'Gain', xUnits = 'V/A', yName = 'onoise', yUnits = 'Vrms',xLim = [] , yLim = [], show = False, )
     ini.defaultColors      = ['r','b','g','c','m','y','k']
 
+    #plot the spectrum for 200MV/A
     head2html('Spectrum plots for gain=200MV/A')
     i1.defPar('gain', 200e6)
     i1.setSource('I1_XU1')     #the only noise source in the model is the controller's noise equivalent
@@ -392,6 +381,7 @@ def LoadNoiseSymbolic():
     result2.onoise=result.onoise*NEF
     NoiseSpectrum=plotSweep('onoise_spect_200','Output referred noise sprectrum. Gain=200M.', result, 8e-3, 2e4, 200, funcType='onoise', show=False) #plot the spectrum
 
+    #return the estimated rms onoise and spectrum with SLICAP
     return NoiseSpectrum, GraphNoiseRMS
 
 t1 = time()
@@ -400,25 +390,26 @@ prj = initProject('Visualization')
 print("Project inititated")
 ini.MaximaTimeOut = 600         #Some extra time to allow the computer to calculate integrals.
 
-CHAPTER=51 #For selecting the loopgains. 42 Controller with ideal resistor, 44 Post-layout controller with ideal resistor, 51 Prelayout full, 52 Postlayout full, 'All' for all together
-LoopgainMag=True
-LoopgainPhs=True
-NoiseSpectrum=False
-NoiseRMSResult=False
-P_Res_Ideal_4vs8_ResponsesDCAC=False
-PseudoResistor_AC_RealvsIdeal=False
-PseudoResistor_DC_RealvsIdeal=False
-ACLevels=False
-PseudoresistorBiasing=False
-ResistanceSelection=False
-Transient=False
-NoiseChapter51pre=False
-NoiseChapter51post=False
-gainAC=False
-servoCompare=False
-PSRRiPlot=False
-PSRRvPlot=False
-Driving=False
+#GRAPH SELECTION PARAMETERS (EXECUTION PARAMETERS)
+CHAPTER=51                                      #For selecting the loop gains. 42 Controller with ideal resistor, 44 Post-layout controller with ideal resistor, 51 Prelayout full, 52 Postlayout full, 'All' for all together
+LoopgainMag=True                                #PLot loop gain magnitude comparison between Cadence simulations and SLiCAP estimations
+LoopgainPhs=True                                #PLot loop gain phase comparison between Cadence simulations and SLiCAP estimations
+NoiseSpectrum=False                             #PLot noise spectrum comparison between Cadence simulations and SLiCAP estimations
+NoiseRMSResult=False                            #PLot onoise rms vs gain comparison between Cadence simulations and SLiCAP estimations
+P_Res_Ideal_4vs8_ResponsesDCAC=False            #PLot AC and DC responses of the pseudo-resistor using 4 and 8 cells comparison between Cadence simulations and SLiCAP estimations
+PseudoResistor_AC_RealvsIdeal=False             #PLot AC response ideal pseudo resistor and with biasing comparison between Cadence simulations and SLiCAP estimations
+PseudoResistor_DC_RealvsIdeal=False             #PLot DC response ideal pseudo resistor and with biasing comparison between Cadence simulations and SLiCAP estimations
+ACLevels=False                                  #PLot AC response Pre and Post layout for different gain levels comparison between Cadence simulations and SLiCAP estimations
+PseudoresistorBiasing=False                     #PLot biasing Vc generation versus Ic for High-resistance and Low-resistance modes.
+ResistanceSelection=False                       #PLot loop gain phase of the amplifier using a a resistor or a parallel of triode transistors to implement Rps
+Transient=False                                 #PLot transient (voltage clamp + membrane current stimuli + output voltage)
+NoiseChapter51pre=False                         #PLot noise spectrum and rms onoise vs gain for the whole system (pre-layout) and comparison with estimated controller contribution
+NoiseChapter51post=False                        #PLot noise spectrum and rms onoise vs gain for the whole system (post-layout) and comparison with estimated controller contribution
+gainAC=False                                    #PLot transimpedance gain from membrane to load vs frequency
+servoCompare=False                              #Plot pre and post layout servo functions
+PSRRiPlot=False                                 #PLot PSRR referred to the membrane current
+PSRRvPlot=False                                 #PLot PSRR referred to the clamping voltage
+Driving=False                                   #PLot the results of the testbench to determine the ouput capabilities
 
 if (LoopgainMag or LoopgainPhs):
     f_check_max,f_check_min,SLiCAPPlotSweepMag, SLiCAPPlotSweepPhase = LoadFinalCircuit(False,LoopgainMag,LoopgainPhs)
@@ -437,7 +428,6 @@ if NoiseSpectrum:
              Trace1sel[key]=Trace1[key]
              Trace1sel[key].label=Trace1sel[key].label.replace("onoise (WRps=1e-06) Y","Controller - Gain 200M")
              print(str(Trace1sel[key].label))
-    #SLiCAPPlotNoise = plot('Noisecomparison', 'Ouput referred noise spectrum', 'log', Trace1sel, xName = 'f', xUnits = 'Hz', yName = 'Noise', yUnits = '$V^2/Hz$', xLim = [] , yLim = [], show = False)
     TracePlot={}
     keys=list(Trace1sel.keys())
     selectionList=['loopgain','Controller - Gain 200M']

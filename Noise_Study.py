@@ -31,7 +31,7 @@ def LoadBasicCircuit(Name):
     i1.setCircuit(Name+'.cir')    #Defines the netlist to be analyzed
     print("Circuit set")
     AssignProcessParameters(i1)   #Assigns the EKV process paramters to the elements of the netlist
-    # Declares model specefications
+    # Assigns model specefications
     i1.defPar('IG', IG)
     i1.defPar('Ce', Ce)
     i1.defPar('Ree', Ree)

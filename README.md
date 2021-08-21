@@ -1,6 +1,6 @@
 # MScThesisAdRC_AnnexI
 
-The scripts are part of the Master's Thesis "Microelectronic design of a pseudo voltage clamp for a 0.18um CMOS based mesoscale neural interface for intracellular in-vitro recording and stimulation"
+The scripts are part of the Master's Thesis "Microelectronic design of a pseudo voltage clamp for a 0.18um CMOS based mesoscale neural interface for intracellular in-vitro recording and stimulation", available at http://repository.tudelft.nl
 
 by
 
@@ -45,9 +45,9 @@ PLEASE NOTE THAT
 
 1) The scripts might not run for different SLiCAP versions. The scripts have been tested with the version at https://github.com/aitordelrivero/SLiCAP_python/tree/e3f4d5fddc5466398a813fc3eebde7475d7c4795.
 
-2) The scripts can run with default EKV parameters. Process parameters are available in the internal Wiki only for authorised users.
+2) The scripts can run with default EKV parameters. Process parameters are available in the internal Wiki only for authorized users.
 
 ------
 
 Last update: 15/08/2021
-Aitor del Rivero Cortázar. Creative Commons Attribution-NonCommercial-NoDerivatives 4.0 International License. 
+Aitor del Rivero Cortázar. Creative Commons Attribution-NonCommercial-NoDerivatives 4.0 International License.
