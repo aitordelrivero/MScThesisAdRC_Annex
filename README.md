@@ -1,6 +1,6 @@
 # MScThesisAdRC_AnnexI
 
-The scripts are part of the Master's Thesis "Microelectronic design of a pseudo voltage clamp for a 0.18um CMOS based mesoscale neural interface for intracellular in-vitro recording and stimulation", available at http://repository.tudelft.nl
+The scripts are part of the Master's Thesis "Microelectronic design of a pseudo voltage clamp for a 0.18um CMOS based mesoscale neural interface for intracellular in-vitro recording and stimulation", available at http://resolver.tudelft.nl/uuid:c6fd0fb6-20f7-43ee-bf7e-261b293fa00f
 
 by
 
