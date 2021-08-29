@@ -2,9 +2,10 @@
   (2/3 W L e0 eSi02 / Tox) is the Meyer model for the intrinstic capacitance between the gate and the source in saturation. 
   Cgso is the overlap capacitance which is the main contributor to the extrinsic capacitance.
  
-  
 - The broken references in Page 23 point towards citation #36 (Middlebrook, 2006)
 
 - In page 29, line 4, "considering only the extrinsic capacitances" should be removed.
 
 - In page 30, the caption of Figure 4.3 should switch the references to graph B) and C).
+
+- In Table 4.7., page 48, Vsat, VGS and Vth are absolute values. Therefore, they should be written as |Vsat|, |VGS| and |Vth|.
