@@ -1,6 +1,8 @@
 - Eq. 3.26. in Page 19 of the Thesis Report DOES include the intrinsic capacitance:
   (2/3 W L e0 eSi02 / Tox) is the Meyer model for the intrinstic capacitance between the gate and the source in saturation. 
-  Cgso is the overlap capacitance which is the main contributor to the extrinsic capacitance.
+  Cgso is the overlap capacitance (extrinsic).
+  
+- Eq 3.26. in Page 16 is missing a W multiplying Cgso.
  
 - The broken references in Page 23 point towards citation #36 (Middlebrook, 2006)
 
